@@ -64,14 +64,27 @@ object Hocongen {
         case (cur, prev) => prev.withFallback(cur)
       }
 
-    val defs = (Seq("package config") ++ Generator
-      .create(totalConf)
-      .map(_.toString))
+    val defs = Generator.create(totalConf)
+
+    val (types, classes) = defs.partition(_.isInstanceOf[Generator.TypeDef])
+
+    val classDefs = classes
+      .map(_.toString)
       .mkString("\n")
+
+    val typeDefs = s"package object types { ${types.map(_.toString).mkString("\n")} }"
 
     val outputFile = outputPath / "config.scala"
 
-    outputFile.toFile.writeAll(defs)
+    outputFile.toFile.writeAll(
+      "package config",
+      "\n",
+      typeDefs,
+      "\n",
+      "import types._",
+      "\n",
+      classDefs
+    )
 
     Seq(outputFile.jfile)
   }
