@@ -9,6 +9,6 @@ object Main {
 
     val root = Root(ConfigFactory.load())
 
-    println(root)
+    println(root.nested.pathway.myNewPath.someOtherThing)
   }
 }
