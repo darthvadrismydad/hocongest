@@ -13,7 +13,6 @@ object Generator {
   trait Definition {
     def name: String
     def `type`: String
-    def default: Option[Any] = None
     def originName: Option[String] = None
   }
 
@@ -24,8 +23,7 @@ object Generator {
   case class FieldDef(
     name: String,
     `type`: String,
-    override val default: Option[Any],
-    override val originName: Option[String],
+     override val originName: Option[String],
     confGetterAlt: Option[String] = None
   ) extends Definition {
         lazy val confGetter: String = confGetterAlt.getOrElse(s"""c.get${`type`}("${originName.getOrElse(name)}")""")
@@ -54,14 +52,10 @@ object Generator {
           case c if c.valueType == ConfigValueType.OBJECT =>
             val className = name + "_" + UUID.randomUUID().toString().replace("-", "")
             create(conf.getConfig(e), Some(className), Some(e)) :+
-              FieldDef(name, className, None, Some(e), Some(s"""${className}(c.getConfig("$e"))"""))
+              FieldDef(name, className, Some(e), Some(s"""${className}(c.getConfig("$e"))"""))
           case c if c.valueType == ConfigValueType.LIST =>
             val items = conf.getList(e).unwrapped()
             val clazz = items.head.getClass()
-            val defaults = items.collect({
-                  case str: String => '"' + str + '"'
-                  case other => other
-            })
             val typeName = items.head match {
               case _: java.lang.Integer => "Int"
               case ce => ce.getClass.getSimpleName
@@ -69,7 +63,7 @@ object Generator {
             val listType = s"${typeName}List"
             val genericTypedList = s"java.util.List[${clazz.getSimpleName}]"
             Seq(
-              FieldDef(name, listType, Some(s"""List(${defaults.mkString(", ")})"""), Some(e)),
+              FieldDef(name, listType, Some(e)),
               TypeDef(genericTypedList, listType)
             )
           case c if c.valueType == ConfigValueType.NUMBER =>
@@ -77,9 +71,9 @@ object Generator {
               case _: java.lang.Integer => "Int"
               case ce => ce.getClass.getSimpleName
             }
-            Seq(FieldDef(name, typeName.capitalize, Some(c.render()), Some(e)))
+            Seq(FieldDef(name, typeName.capitalize, Some(e)))
           case c =>
-            Seq(FieldDef(name, c.unwrapped().getClass().getSimpleName(), Some(c.render()), Some(e)))
+            Seq(FieldDef(name, c.unwrapped().getClass().getSimpleName(), Some(e)))
         }
       }
 
