@@ -34,7 +34,7 @@ object Generator {
     override def toString() = s"""
     |  class ${name}(${fields.map(makeField).mkString(", ")})
     |  object ${name} {
-    |    def apply(c: com.typesafe.config.Config): ${name} = new ${name}(
+    |    def apply(c: com.typesafe.config.Config = com.typesafe.config.ConfigFactory.defaultReference()): ${name} = new ${name}(
     |      ${fields.map(_.confGetter).mkString(", ")}
     |    )
     |  }
